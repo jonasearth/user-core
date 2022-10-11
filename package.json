@@ -20,7 +20,9 @@
     "test:watch": "node --inspect-brk=0.0.0.0 -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --watch --runInBand",
     "test:ci": "jest --ci --testResultsProcessor=\"jest-junit\" --coverage --coverageReporters=cobertura",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk=0.0.0.0 -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "test:debug": "node --inspect-brk=0.0.0.0 -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "ts-knex": "ts-node -r dotenv/config -r tsconfig-paths/register node_modules/.bin/knex",
+    "knex": "node -r dotenv/config node_modules/.bin/knex"
   },
   "dependencies": {
     "@nestjs/common": "^9.1.4",
@@ -61,7 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^5.40.0",
     "@typescript-eslint/parser": "^5.40.0",
     "chai": "^4.3.6",
-    "eslint": "^8.25.0",
+    "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",
