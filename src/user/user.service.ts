@@ -1,15 +1,13 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ResponseDTO } from '../helpers/response.dto';
-import { UserErrorEnum } from './enums/error.enum';
+import { UserErrorMessage } from './enums/error.enum';
 import {
   UserAlreadyExistsException,
   UserNotFoundException,
 } from './exceptions/user.exceptions';
 import { CreateUserDTO } from './dto/createUser.dto';
 import { ListUserDTO } from './dto/listUser.dto';
-import { ErrorEnum } from '../helpers/enums/error.enum';
 import { UnexpectedException } from '../helpers/exceptions';
 import { Logger } from 'winston';
 import { Repository } from 'typeorm';
@@ -22,114 +20,77 @@ export class UserService {
     private userRepository: Repository<UserEntity>,
   ) {}
 
-  async list(user: ListUserDTO): Promise<ResponseDTO<UserEntity[] | Error>> {
+  async list(user: ListUserDTO): Promise<UserEntity[]> {
     try {
       const users = await this.userRepository.find({
         where: user,
       });
-      return new ResponseDTO(users);
+      return users;
     } catch (error) {
-      this.logger.log('warn', error.message);
-      return new ResponseDTO(error, false, ErrorEnum.UNEXPECTED_ERROR);
+      this.logger.error('LIST USER: ', error.message);
+      throw error;
     }
   }
 
-  async get(
-    user: Partial<UserEntity>,
-  ): Promise<ResponseDTO<UserEntity | Error>> {
+  async get(user: Partial<UserEntity>): Promise<UserEntity> {
     try {
       console.log(user);
       const userData = await this.userRepository.findOne({
         where: user,
       });
-      if (userData) {
-        return new ResponseDTO(userData);
+      if (!userData) {
+        throw new NotFoundException(UserErrorMessage.USER_NOT_FOUND);
       }
-      return new ResponseDTO(
-        new UserNotFoundException(),
-        false,
-        ErrorEnum.NOT_FOUND,
-      );
+      return userData;
     } catch (error) {
-      this.logger.log('warn', error.message);
-      return new ResponseDTO(error, false, ErrorEnum.UNEXPECTED_ERROR);
+      this.logger.error('GET USER: ', error.message);
+      throw error;
     }
   }
-  async create(user: CreateUserDTO): Promise<ResponseDTO<UserEntity | Error>> {
+  async create(user: CreateUserDTO): Promise<UserEntity> {
     try {
       const exists = await this.exists({ email: user.email });
       if (exists) {
-        return new ResponseDTO(
-          new UserAlreadyExistsException(),
-          false,
-          UserErrorEnum.USER_ALREADY_EXISTS,
-        );
+        throw new UserAlreadyExistsException();
       }
       const userCreated = await this.userRepository.save(
         this.userRepository.create(user),
       );
-      if (userCreated.id) {
-        return new ResponseDTO(userCreated);
+      if (!userCreated.id) {
+        throw new UnexpectedException();
       }
-      return new ResponseDTO(
-        new UnexpectedException(),
-        false,
-        ErrorEnum.UNEXPECTED_ERROR,
-      );
+      return userCreated;
     } catch (error) {
-      this.logger.log('warn', error.message);
-      return new ResponseDTO(error, false, ErrorEnum.UNEXPECTED_ERROR);
+      this.logger.error('CREATE USER: ', error.message);
+      throw error;
     }
   }
-  async update(
-    id: string,
-    user: Partial<UserEntity>,
-  ): Promise<ResponseDTO<boolean | Error>> {
+  async update(id: string, user: Partial<UserEntity>): Promise<boolean> {
     try {
       const exists = await this.exists({ id });
       if (!exists) {
-        return new ResponseDTO(
-          new UserNotFoundException(),
-          false,
-          ErrorEnum.NOT_FOUND,
-        );
+        throw new UserNotFoundException();
       }
       const updateResult = await this.userRepository.update(id, user);
-      if (!!updateResult.affected) {
-        return new ResponseDTO(true);
-      }
-      return new ResponseDTO(
-        new UnexpectedException(),
-        false,
-        ErrorEnum.UNEXPECTED_ERROR,
-      );
+
+      return !!updateResult.affected;
     } catch (error) {
-      this.logger.log('warn', error.message);
-      return new ResponseDTO(error, false, ErrorEnum.UNEXPECTED_ERROR);
+      this.logger.error('UPDATE USER: ', error.message);
+      throw error;
     }
   }
-  async delete(id: string): Promise<ResponseDTO<boolean | Error>> {
+  async delete(id: string): Promise<boolean> {
     try {
       const exists = await this.exists({ id });
       if (!exists) {
-        return new ResponseDTO(
-          new UserNotFoundException(),
-          false,
-          ErrorEnum.NOT_FOUND,
-        );
+        throw new UserNotFoundException();
       }
-      const deleteResult = await this.userRepository.delete(id);
-      if (!!deleteResult.affected) {
-        return new ResponseDTO(true);
-      }
-      return new ResponseDTO(
-        new UnexpectedException(),
-        false,
-        ErrorEnum.UNEXPECTED_ERROR,
-      );
+      const deleteResult = await this.userRepository.softDelete(id);
+
+      return !!deleteResult.affected;
     } catch (error) {
-      this.logger.log('warn', error.message);
-      return new ResponseDTO(error, false, ErrorEnum.UNEXPECTED_ERROR);
+      this.logger.error('DELETE USER: ', error.message);
+      throw error;
     }
   }
 

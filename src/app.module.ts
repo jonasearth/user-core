@@ -4,9 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user/entities/user.entity';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'winston.config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerInterceptor } from './interceptors/logger.interceptor';
-import { AuthGuard } from './user/guards/auth.guard';
 
 @Module({
   imports: [
